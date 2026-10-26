@@ -1,0 +1,122 @@
+@import url("https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap");
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Monocraft';
+  src: url('https://cdn.jsdelivr.net/gh/IdreesInc/Monocraft@main/dist/Monocraft-woff2/Monocraft.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/npm/monocraft-font@1.0.2/Monocraft.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bg-base: #16161E;        /* Deep Terminal Slate */
+  --bg-card: #1A1B26;        /* Primary Card Surface */
+  --bg-hud: #13141C;         /* Darker Inset / Mobile HUD / Bubbles */
+  --border-muted: #414868;   /* Default Border & Hard Offset Shadow */
+  --border-subtle: #292E42;  /* Inner Divider Lines */
+  --accent-cyan: #7DCFFF;    /* Active Highlight & Kodama Eyes */
+  --accent-amber: #FF9E64;   /* Secondary Highlight & Prompts */
+  --accent-green: #9ECE6A;   /* Status Badges */
+  --text-primary: #C0CAF5;   /* Crisp Ice White-Blue */
+  --text-secondary: #A9B1D6; /* Readable Body Text */
+  --text-muted: #787C99;     /* Terminal Paths & Meta */
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Subtle Engineering Blueprint Grid Background */
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: var(--bg-base);
+  background-image:
+    linear-gradient(to right, rgba(65, 72, 104, 0.14) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(65, 72, 104, 0.14) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.font-heading,
+h1, h2, h3 {
+  font-family: 'Monocraft', 'JetBrains Mono', monospace;
+}
+
+.font-sans {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Mandatory Crisp Pixel Art Rendering */
+.pixelated {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Neo-Brutalist Mechanical Card: subtle at rest, lights up on hover */
+.neo-card,
+.neo-btn {
+  border-top: 1.5px solid rgba(65, 72, 104, 0.45);
+  border-left: 1.5px solid rgba(65, 72, 104, 0.45);
+  border-right: 1.5px solid rgba(65, 72, 104, 0.18);
+  border-bottom: 1.5px solid rgba(65, 72, 104, 0.18);
+  box-shadow: 4px 4px 0px 0px rgba(65, 72, 104, 0.18);
+  transition: transform 140ms cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 140ms cubic-bezier(0.2, 0, 0, 1),
+              border-color 140ms ease;
+}
+
+.neo-card {
+  background-color: var(--bg-card);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.neo-card:hover,
+.neo-btn:hover {
+  border-color: #7DCFFF;
+  box-shadow: 5px 5px 0px 0px rgba(125, 207, 255, 0.9);
+  transform: translate(-2px, -2px);
+}
+
+.neo-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 0px 0px 0px 0px var(--border-muted);
+}
+
+/* Desktop Speech Bubble Box */
+.kodama-bubble {
+  box-sizing: border-box;
+  max-width: calc(100vw - 32px);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  background-color: var(--bg-hud);
+  border: 1.5px solid var(--accent-cyan);
+  box-shadow: 3px 3px 0px 0px var(--border-muted);
+}
+
+/* Global pixel typography: Silkscreen first, Monocraft fallback */
+* {
+  font-family: "Silkscreen", "Monocraft", monospace !important;
+}
+
+html, body, .font-sans, .font-mono {
+  font-family: "Silkscreen", "Monocraft", monospace !important;
+  scroll-behavior: smooth;
+}

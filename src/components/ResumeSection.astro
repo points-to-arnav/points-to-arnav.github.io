@@ -1,0 +1,71 @@
+---
+import { RESUME_DATA, type ResumeEntry } from "../data/portfolio";
+
+const timeline: (ResumeEntry & { kind: "EDU" | "WORK" })[] = [
+  ...RESUME_DATA.education.map((e) => ({ ...e, kind: "EDU" as const })),
+  ...RESUME_DATA.experienceAndMilestones.map((e) => ({ ...e, kind: "WORK" as const })),
+];
+---
+
+<section class="max-w-[840px] mx-auto px-4 sm:px-6">
+  <article
+    id={RESUME_DATA.id}
+    class="neo-card relative mt-16 p-6 bg-[#1A1B26] border-[1.5px] border-[#414868]"
+    data-kodama-trigger
+    data-kodama-id={RESUME_DATA.id}
+    data-kodama-message={RESUME_DATA.kodamaMessage}
+  >
+    <div
+      data-kodama-perch
+      class="hidden md:block absolute -top-[48px] right-5 w-[48px] h-[48px] pointer-events-none"
+      aria-hidden="true"
+    ></div>
+
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#414868] pb-3 mb-4 font-mono text-xs text-[#787C99]">
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-2 h-2 bg-[#FF9E64]"></span>
+        <span>{RESUME_DATA.path}</span>
+      </div>
+      <span class="text-[#9ECE6A]">[RESUME]</span>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+      <h2 class="font-mono text-xl font-bold text-[#C0CAF5] tracking-tight">
+        // RESUME_AND_TIMELINE
+      </h2>
+      <a
+        href={RESUME_DATA.pdfUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        download
+        class="neo-btn font-mono text-xs px-3 py-1.5 bg-[#13141C] border border-[#7DCFFF] text-[#7DCFFF] hover:bg-[#7DCFFF] hover:text-[#16161E]"
+      >
+        [ -> DOWNLOAD_RESUME.PDF ]
+      </a>
+    </div>
+
+    <ul class="space-y-4">
+      {timeline.map((entry) => (
+        <li class="border-l-2 border-[#292E42] pl-4 relative">
+          <span class="absolute -left-[5px] top-1 w-2 h-2 bg-[#7DCFFF]"></span>
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            <span class="font-mono text-[11px] text-[#FF9E64]">{entry.period}</span>
+            <span class="font-mono text-[10px] px-1.5 py-0.5 bg-[#13141C] border border-[#414868] text-[#787C99]">
+              [{entry.kind}]
+            </span>
+          </div>
+          <h3 class="font-mono text-sm font-semibold text-[#C0CAF5]">{entry.title}</h3>
+          <p class="font-sans text-xs text-[#A9B1D6] mb-1.5">{entry.organization}</p>
+          <ul class="space-y-1">
+            {entry.details.map((detail) => (
+              <li class="flex items-start gap-2 font-sans text-xs text-[#A9B1D6]">
+                <span class="font-mono text-[#7DCFFF] shrink-0">-&gt;</span>
+                <span>{detail}</span>
+              </li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ul>
+  </article>
+</section>

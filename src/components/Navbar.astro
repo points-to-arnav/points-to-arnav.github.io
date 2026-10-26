@@ -1,0 +1,48 @@
+---
+const NAV_LINKS = [
+  { href: "#about-me-card", label: "01 // ABOUT" },
+  { href: "#resume-card", label: "02 // RESUME" },
+  { href: "#skills-section", label: "03 // STACK" },
+  { href: "#projects-section", label: "04 // PROJECTS" },
+  { href: "#interests-section", label: "05 // INTERESTS" },
+  { href: "#network-section", label: "06 // NETWORK" },
+  { href: "#contact-card", label: "07 // CONTACT" },
+];
+---
+
+<header class="sticky top-0 z-40 bg-[#16161E]/95 border-b-[1.5px] border-[#414868]">
+  <nav class="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between gap-4 overflow-visible">
+    <a href="#hero-card" class="font-mono text-sm text-[#C0CAF5] whitespace-nowrap shrink-0">
+      arnav@portfolio:~$<span id="blink-cursor" class="text-[#7DCFFF]">█</span>
+    </a>
+
+    <ul class="hidden md:flex items-center justify-center gap-4 lg:gap-6 font-mono text-xs text-[#A9B1D6]">
+      {NAV_LINKS.map((link) => (
+        <li>
+          <a href={link.href} class="hover:text-[#7DCFFF] transition-colors whitespace-nowrap">
+            {link.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <button
+      id="kodama-sleep-toggle"
+      type="button"
+      class="neo-btn shrink-0 font-mono text-[11px] px-3 py-1.5 bg-[#13141C] border border-[#414868] text-[#C0CAF5] hover:border-[#7DCFFF] hover:text-[#7DCFFF]"
+      aria-pressed="false"
+    >
+      <span id="kodama-sleep-label">[ zZz SLEEP ]</span>
+    </button>
+  </nav>
+</header>
+
+<style>
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
+  }
+  #blink-cursor {
+    animation: blink 1s step-end infinite;
+  }
+</style>

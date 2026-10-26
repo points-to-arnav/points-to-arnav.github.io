@@ -1,0 +1,38 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Navbar from "../components/Navbar.astro";
+import AboutSection from "../components/AboutSection.astro";
+import ResumeSection from "../components/ResumeSection.astro";
+import SkillsSection from "../components/SkillsSection.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+import InterestsSection from "../components/InterestsSection.astro";
+import NetworkSection from "../components/NetworkSection.astro";
+import ContactSection from "../components/ContactSection.astro";
+import KodamaCompanion from "../components/KodamaCompanion.astro";
+import { PROJECTS } from "../data/portfolio";
+---
+
+<BaseLayout>
+  <Navbar />
+
+  <main>
+    <AboutSection />
+    <ResumeSection />
+    <SkillsSection />
+
+    <section id="projects-section" class="max-w-[840px] mx-auto px-4 sm:px-6">
+      <h2 class="font-mono text-xl font-bold text-[#C0CAF5] tracking-tight mt-16 mb-6">
+        // PROJECTS
+      </h2>
+      {PROJECTS.map((project) => (
+        <ProjectCard project={project} />
+      ))}
+    </section>
+
+    <InterestsSection />
+    <NetworkSection />
+    <ContactSection />
+  </main>
+
+  <KodamaCompanion />
+</BaseLayout>

@@ -1,0 +1,85 @@
+---
+import type { ProjectItem } from "../data/portfolio";
+
+interface Props {
+  project: ProjectItem;
+}
+
+const { project } = Astro.props;
+---
+
+<article
+  id={project.id}
+  class="neo-card relative mt-16 p-6 bg-[#1A1B26] border-[1.5px] border-[#414868]"
+  data-kodama-trigger
+  data-kodama-id={project.id}
+  data-kodama-message={project.kodamaMessage}
+>
+  <!-- DESKTOP LANDING PAD: Positioned strictly on the outside top-right border -->
+  <div
+    data-kodama-perch
+    class="hidden md:block absolute -top-[48px] right-5 w-[48px] h-[48px] pointer-events-none"
+    aria-hidden="true"
+  ></div>
+
+  <!-- Terminal Header Strip -->
+  <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#414868] pb-3 mb-4 font-mono text-xs text-[#787C99]">
+    <div class="flex items-center gap-2">
+      <span class="inline-block w-2 h-2 bg-[#7DCFFF]"></span>
+      <span class="text-xs opacity-75 break-all min-w-0">{project.path}</span>
+    </div>
+    <span class="text-[#9ECE6A]">{project.category}</span>
+  </div>
+
+  <!-- Title & Summary -->
+  <h3 class="font-mono text-xl font-bold text-[#C0CAF5] tracking-tight mb-2">
+    {project.title}
+  </h3>
+  <p class="font-sans text-sm text-[#A9B1D6] leading-relaxed mb-4">
+    {project.description}
+  </p>
+
+  <!-- Architecture / Highlights Bullet List -->
+  <ul class="space-y-1.5 mb-5 font-sans text-xs text-[#A9B1D6]">
+    {project.highlights.map((item) => (
+      <li class="flex items-start gap-2">
+        <span class="font-mono text-[#FF9E64]">-&gt;</span>
+        <span>{item}</span>
+      </li>
+    ))}
+  </ul>
+
+  <!-- Tech Tags & Action Links -->
+  <div class="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-[#292E42]">
+    <div class="flex flex-wrap gap-2">
+      {project.tags.map((tag) => (
+        <span class="font-mono text-[11px] px-2 py-0.5 bg-[#13141C] border border-[#414868] text-[#7DCFFF]">
+          [{tag}]
+        </span>
+      ))}
+    </div>
+
+    <div class="flex items-center gap-3">
+      {project.githubUrl && (
+        <a
+          href={project.githubUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="neo-btn font-mono text-xs px-3 py-1.5 bg-[#13141C] border border-[#414868] text-[#C0CAF5] hover:border-[#7DCFFF] hover:text-[#7DCFFF]"
+        >
+          [ GitHub ↗ ]
+        </a>
+      )}
+      {project.liveUrl && (
+        <a
+          href={project.liveUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="neo-btn font-mono text-xs px-3 py-1.5 bg-[#13141C] border border-[#7DCFFF] text-[#7DCFFF] hover:bg-[#7DCFFF] hover:text-[#16161E]"
+        >
+          [ Live Demo ↗ ]
+        </a>
+      )}
+    </div>
+  </div>
+</article>

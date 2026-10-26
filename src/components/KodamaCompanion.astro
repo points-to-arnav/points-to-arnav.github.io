@@ -1,0 +1,471 @@
+---
+---
+
+<!-- 1. DESKTOP FLOATING ACTOR (Hidden on <= 768px) -->
+<div
+  id="kodama-desktop-actor"
+  class="hidden md:block absolute top-0 left-0 z-40 pointer-events-none select-none"
+  style="transform: translate3d(0px, 0px, 0px);"
+  aria-hidden="true"
+>
+  <!-- Speech Bubble Positioned Above Sprite -->
+  <div
+    id="kodama-desktop-bubble"
+    class="kodama-bubble absolute bottom-[54px] right-0 w-[240px] px-3 py-2 font-mono text-[11px] leading-snug text-[#C0CAF5] transition-opacity duration-150 opacity-100"
+  >
+    <div class="flex items-start gap-1.5">
+      <span class="text-[#FF9E64] shrink-0">&gt;</span>
+      <span id="kodama-desktop-text" class="min-w-0 flex-1 break-words [overflow-wrap:anywhere]">Yo! Hover any card and I'll break down the architecture.</span>
+    </div>
+    <!-- Crisp Pixel Pointer Tail -->
+    <div class="absolute -bottom-[6px] right-5 w-2.5 h-2.5 bg-[#13141C] border-r-[1.5px] border-b-[1.5px] border-[#7DCFFF] rotate-45"></div>
+  </div>
+
+  <!-- 32x32 Canvas Scaled to 48x48 -->
+  <canvas
+    id="kodama-desktop-canvas"
+    width="32"
+    height="32"
+    class="pixelated w-[48px] h-[48px] block"
+  ></canvas>
+</div>
+
+<!-- 2. MOBILE STICKY BOTTOM HUD (Shown only on <= 768px) -->
+<aside
+  id="kodama-mobile-hud"
+  class="flex md:hidden fixed bottom-0 left-0 right-0 h-[60px] z-50 bg-[#13141C] border-t-2 border-[#414868] px-3 items-center gap-3 select-none"
+  aria-live="polite"
+>
+  <div class="shrink-0 w-[44px] h-[44px] bg-[#1A1B26] border border-[#414868] flex items-center justify-center">
+    <canvas
+      id="kodama-mobile-canvas"
+      width="32"
+      height="32"
+      class="pixelated w-[36px] h-[36px] block"
+    ></canvas>
+  </div>
+  <div class="flex-1 min-w-0 font-mono text-xs text-[#C0CAF5] leading-tight">
+    <span class="text-[#FF9E64] mr-1">[KODAMA]:</span>
+    <span id="kodama-mobile-text" class="text-[#A9B1D6]">Scroll through the projects—I'll explain each build!</span>
+  </div>
+</aside>
+
+<script>
+  type FsmState = "IDLE" | "TELEPORT_OUT" | "TELEPORT_IN" | "TALKING" | "SLEEPING";
+
+  const FRAME_SIZE = 32;
+  const SPRITE_URL = "/sprites/kodama-sheet.png";
+
+  const desktopCanvas = document.getElementById("kodama-desktop-canvas") as HTMLCanvasElement | null;
+  const mobileCanvas = document.getElementById("kodama-mobile-canvas") as HTMLCanvasElement | null;
+  const desktopActor = document.getElementById("kodama-desktop-actor") as HTMLElement | null;
+  const desktopBubble = document.getElementById("kodama-desktop-bubble") as HTMLElement | null;
+  const desktopText = document.getElementById("kodama-desktop-text") as HTMLElement | null;
+  const mobileText = document.getElementById("kodama-mobile-text") as HTMLElement | null;
+  const sleepToggleBtn = document.getElementById("kodama-sleep-toggle") as HTMLButtonElement | null;
+  const sleepLabel = document.getElementById("kodama-sleep-label") as HTMLElement | null;
+
+  const desktopCtx = desktopCanvas?.getContext("2d") ?? null;
+  const mobileCtx = mobileCanvas?.getContext("2d") ?? null;
+
+  const MOBILE_DEFAULT_TEXT = mobileText?.textContent ?? "";
+  const SLEEP_MOBILE_TEXT = "zZz Sleeping... Tap [WAKE] in navbar to summon.";
+
+  // ---------------------------------------------------------------------
+  // 1. Procedural Fallback Sprite Sheet (Zero Broken Images Guarantee)
+  // ---------------------------------------------------------------------
+  function px(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, h);
+  }
+
+  function drawBase(ctx: CanvasRenderingContext2D, ox: number, yOff: number) {
+    px(ctx, ox + 8, 8 + yOff, 16, 16, "#1A1B26");
+    px(ctx, ox + 10, 6 + yOff, 12, 2, "#414868");
+    px(ctx, ox + 8, 8 + yOff, 2, 14, "#414868");
+    px(ctx, ox + 22, 8 + yOff, 2, 14, "#414868");
+    px(ctx, ox + 8, 22 + yOff, 16, 2, "#414868");
+  }
+
+  function drawEyesOpen(ctx: CanvasRenderingContext2D, ox: number, yOff: number) {
+    px(ctx, ox + 12, 14 + yOff, 3, 3, "#7DCFFF");
+    px(ctx, ox + 17, 14 + yOff, 3, 3, "#7DCFFF");
+  }
+
+  function drawEyesClosed(ctx: CanvasRenderingContext2D, ox: number, yOff: number) {
+    px(ctx, ox + 12, 15 + yOff, 3, 1, "#7DCFFF");
+    px(ctx, ox + 17, 15 + yOff, 3, 1, "#7DCFFF");
+  }
+
+  function createProceduralSpriteSheet(): HTMLCanvasElement {
+    const sheet = document.createElement("canvas");
+    sheet.width = FRAME_SIZE * 6;
+    sheet.height = FRAME_SIZE;
+    const ctx = sheet.getContext("2d");
+    if (!ctx) return sheet;
+
+    // Frame 0: Idle A
+    drawBase(ctx, 0 * FRAME_SIZE, 0);
+    drawEyesOpen(ctx, 0 * FRAME_SIZE, 0);
+
+    // Frame 1: Idle B (1px hover)
+    drawBase(ctx, 1 * FRAME_SIZE, -1);
+    drawEyesOpen(ctx, 1 * FRAME_SIZE, -1);
+
+    // Frame 2: Teleport Glitch (scanline shift + spark)
+    drawBase(ctx, 2 * FRAME_SIZE, 0);
+    drawEyesOpen(ctx, 2 * FRAME_SIZE, 0);
+    px(ctx, 2 * FRAME_SIZE + 6, 13, 20, 2, "#7DCFFF");
+    ctx.clearRect(2 * FRAME_SIZE + 8, 16, 16, 2);
+
+    // Frame 3: Teleport Embers (dissolved particles)
+    {
+      const ox = 3 * FRAME_SIZE;
+      const particles: [number, number, string][] = [
+        [9, 9, "#7DCFFF"], [13, 7, "#414868"], [17, 10, "#7DCFFF"], [21, 9, "#414868"],
+        [11, 14, "#414868"], [19, 15, "#7DCFFF"], [15, 18, "#414868"], [9, 20, "#7DCFFF"],
+        [21, 21, "#414868"], [14, 12, "#7DCFFF"], [18, 13, "#414868"], [12, 19, "#7DCFFF"],
+      ];
+      particles.forEach(([x, y, color]) => px(ctx, ox + x, y, 2, 2, color));
+    }
+
+    // Frame 4: Talk / Excited (hop up + spark)
+    drawBase(ctx, 4 * FRAME_SIZE, -2);
+    drawEyesOpen(ctx, 4 * FRAME_SIZE, -2);
+    px(ctx, 4 * FRAME_SIZE + 15, 2, 2, 2, "#7DCFFF");
+
+    // Frame 5: Sleep (lowered, eyes closed)
+    drawBase(ctx, 5 * FRAME_SIZE, 2);
+    drawEyesClosed(ctx, 5 * FRAME_SIZE, 2);
+
+    return sheet;
+  }
+
+  let spriteSource: HTMLImageElement | HTMLCanvasElement = createProceduralSpriteSheet();
+
+  const realImage = new Image();
+  realImage.onload = () => {
+    spriteSource = realImage;
+    setFrame(currentFrameIndex);
+  };
+  realImage.onerror = () => {
+    // Procedural fallback already active — nothing further to do.
+  };
+  realImage.src = SPRITE_URL;
+
+  // ---------------------------------------------------------------------
+  // 2. Frame Rendering
+  // ---------------------------------------------------------------------
+  let currentFrameIndex = 0;
+
+  function drawToCanvas(ctx: CanvasRenderingContext2D | null, frameIndex: number) {
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, FRAME_SIZE, FRAME_SIZE);
+    ctx.drawImage(spriteSource, frameIndex * FRAME_SIZE, 0, FRAME_SIZE, FRAME_SIZE, 0, 0, FRAME_SIZE, FRAME_SIZE);
+  }
+
+  function setFrame(frameIndex: number) {
+    currentFrameIndex = frameIndex;
+    drawToCanvas(desktopCtx, frameIndex);
+    drawToCanvas(mobileCtx, frameIndex);
+  }
+
+  function sleepMs(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function typewrite(el: HTMLElement, text: string, stillValid: () => boolean, msPerChar = 18): Promise<boolean> {
+    el.textContent = "";
+    for (let i = 0; i < text.length; i++) {
+      if (!stillValid()) return false;
+      el.textContent += text[i];
+      await sleepMs(msPerChar);
+    }
+    return stillValid();
+  }
+
+  // ---------------------------------------------------------------------
+  // 3. Shared FSM State
+  // ---------------------------------------------------------------------
+  let fsmState: FsmState = "IDLE";
+  let isSleeping = false;
+
+  function isMobileViewport(): boolean {
+    return window.matchMedia("(max-width: 768px)").matches;
+  }
+
+  // Idle breathing loop — only advances frames while truly idle.
+  let idleToggle = 0;
+  setInterval(() => {
+    if (fsmState !== "IDLE") return;
+    idleToggle = idleToggle === 0 ? 1 : 0;
+    setFrame(idleToggle);
+  }, 450);
+
+  // ---------------------------------------------------------------------
+  // 4. Desktop Teleportation & Hover-Intent
+  // ---------------------------------------------------------------------
+  const triggers = Array.from(document.querySelectorAll<HTMLElement>("[data-kodama-trigger]"));
+
+  let currentCardId: string | null = null;
+  let hoverIntentTimer: ReturnType<typeof setTimeout> | null = null;
+  let desktopSeq = 0;
+
+  function positionDesktopActorAtCard(card: HTMLElement) {
+    if (!desktopActor) return;
+    const perch = card.querySelector<HTMLElement>("[data-kodama-perch]");
+    if (!perch) return;
+    const rect = perch.getBoundingClientRect();
+    const x = Math.round(rect.left + window.scrollX);
+    const y = Math.round(rect.top + window.scrollY);
+    desktopActor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+  }
+
+  async function runDesktopTeleport(card: HTMLElement) {
+    if (isSleeping) return;
+    const cardId = card.dataset.kodamaId ?? "";
+    if (cardId === currentCardId) return;
+    currentCardId = cardId;
+
+    const mySeq = ++desktopSeq;
+    const message = card.dataset.kodamaMessage ?? "";
+    const stillCurrent = () => mySeq === desktopSeq && !isSleeping;
+
+    fsmState = "TELEPORT_OUT";
+    if (desktopBubble) desktopBubble.style.opacity = "0";
+
+    setFrame(2);
+    await sleepMs(80);
+    if (!stillCurrent()) return;
+
+    setFrame(3);
+    await sleepMs(90);
+    if (!stillCurrent()) return;
+
+    positionDesktopActorAtCard(card);
+    fsmState = "TELEPORT_IN";
+
+    setFrame(3);
+    await sleepMs(80);
+    if (!stillCurrent()) return;
+
+    setFrame(2);
+    await sleepMs(90);
+    if (!stillCurrent()) return;
+
+    if (desktopBubble) desktopBubble.style.opacity = "1";
+    fsmState = "TALKING";
+
+    let talkToggle = 0;
+    const talkInterval = setInterval(() => {
+      if (!stillCurrent()) {
+        clearInterval(talkInterval);
+        return;
+      }
+      talkToggle = talkToggle === 0 ? 4 : 0;
+      setFrame(talkToggle);
+    }, 180);
+
+    const completed = desktopText ? await typewrite(desktopText, message, stillCurrent, 18) : true;
+    clearInterval(talkInterval);
+    if (!completed || !stillCurrent()) return;
+
+    fsmState = "IDLE";
+    setFrame(0);
+  }
+
+  triggers.forEach((card) => {
+    card.addEventListener("mouseenter", () => {
+      if (isSleeping) return;
+      if (hoverIntentTimer) clearTimeout(hoverIntentTimer);
+      hoverIntentTimer = setTimeout(() => runDesktopTeleport(card), 250);
+    });
+    card.addEventListener("mouseleave", () => {
+      if (hoverIntentTimer) {
+        clearTimeout(hoverIntentTimer);
+        hoverIntentTimer = null;
+      }
+    });
+  });
+
+  function initDesktopSpawn() {
+    const heroCard = document.getElementById("hero-card");
+    if (heroCard) {
+      positionDesktopActorAtCard(heroCard);
+      currentCardId = "hero-card";
+    }
+  }
+  requestAnimationFrame(() => requestAnimationFrame(initDesktopSpawn));
+  window.addEventListener("load", initDesktopSpawn);
+  // Web fonts (Monocraft) change heading heights; re-seat the sprite once layout settles.
+  document.fonts?.ready.then(() => {
+    if (isSleeping || isMobileViewport() || !currentCardId) return;
+    const card = document.querySelector<HTMLElement>(`[data-kodama-id="${currentCardId}"]`);
+    if (card) positionDesktopActorAtCard(card);
+  });
+
+  window.addEventListener("resize", () => {
+    if (isMobileViewport() || !currentCardId) return;
+    const card = document.querySelector<HTMLElement>(`[data-kodama-id="${currentCardId}"]`);
+    if (card) positionDesktopActorAtCard(card);
+  });
+
+  // ---------------------------------------------------------------------
+  // 5. Mobile Scroll-Stop Reaction
+  // ---------------------------------------------------------------------
+  let currentMobileCardId: string | null = null;
+  let mobileScrollTimer: ReturnType<typeof setTimeout> | null = null;
+  let mobileSeq = 0;
+
+  async function runMobileReaction(card: HTMLElement) {
+    if (isSleeping) return;
+    const mySeq = ++mobileSeq;
+    const message = card.dataset.kodamaMessage ?? "";
+    const stillCurrent = () => mySeq === mobileSeq && !isSleeping;
+
+    fsmState = "TELEPORT_OUT";
+    setFrame(2);
+    await sleepMs(100);
+    if (!stillCurrent()) return;
+
+    fsmState = "TELEPORT_IN";
+    setFrame(3);
+    await sleepMs(100);
+    if (!stillCurrent()) return;
+
+    fsmState = "TALKING";
+    let talkToggle = 0;
+    const talkInterval = setInterval(() => {
+      if (!stillCurrent()) {
+        clearInterval(talkInterval);
+        return;
+      }
+      talkToggle = talkToggle === 0 ? 4 : 0;
+      setFrame(talkToggle);
+    }, 180);
+
+    const completed = mobileText ? await typewrite(mobileText, message, stillCurrent, 18) : true;
+    clearInterval(talkInterval);
+    if (!completed || !stillCurrent()) return;
+
+    fsmState = "IDLE";
+    setFrame(0);
+  }
+
+  const mobileObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const card = entry.target as HTMLElement;
+        if (mobileScrollTimer) clearTimeout(mobileScrollTimer);
+        mobileScrollTimer = setTimeout(() => {
+          if (isSleeping) return;
+          const cardId = card.dataset.kodamaId ?? "";
+          if (cardId === currentMobileCardId) return;
+          currentMobileCardId = cardId;
+          runMobileReaction(card);
+        }, 300);
+      });
+    },
+    { rootMargin: "-35% 0px -35% 0px", threshold: 0.1 }
+  );
+
+  triggers.forEach((card) => mobileObserver.observe(card));
+
+  triggers.forEach((card) => {
+    card.addEventListener("click", () => {
+      if (!isMobileViewport() || isSleeping) return;
+      if (mobileScrollTimer) clearTimeout(mobileScrollTimer);
+      currentMobileCardId = card.dataset.kodamaId ?? "";
+      runMobileReaction(card);
+    });
+  });
+
+  // ---------------------------------------------------------------------
+  // 6. Sleep / Wake Toggle
+  // ---------------------------------------------------------------------
+  function enterSleep() {
+    isSleeping = true;
+    desktopSeq++;
+    mobileSeq++;
+    if (hoverIntentTimer) {
+      clearTimeout(hoverIntentTimer);
+      hoverIntentTimer = null;
+    }
+    if (mobileScrollTimer) {
+      clearTimeout(mobileScrollTimer);
+      mobileScrollTimer = null;
+    }
+    fsmState = "SLEEPING";
+    setFrame(5);
+    if (desktopBubble) desktopBubble.style.opacity = "0";
+    if (mobileText) mobileText.textContent = SLEEP_MOBILE_TEXT;
+    if (sleepLabel) sleepLabel.textContent = "[ * WAKE ]";
+    sleepToggleBtn?.setAttribute("aria-pressed", "true");
+  }
+
+  async function wakeUp() {
+    isSleeping = false;
+    // Cancel any in-flight typewriters / teleports from before sleep.
+    const mySeqD = ++desktopSeq;
+    const mySeqM = ++mobileSeq;
+    const stillCurrent = () => mySeqD === desktopSeq && mySeqM === mobileSeq && !isSleeping;
+
+    if (sleepLabel) sleepLabel.textContent = "[ zZz SLEEP ]";
+    sleepToggleBtn?.setAttribute("aria-pressed", "false");
+
+    // Always return to the home card so position and dialogue stay in sync.
+    const homeCard =
+      document.querySelector<HTMLElement>("#hero-card") ??
+      document.querySelector<HTMLElement>("[data-kodama-trigger]");
+    if (!homeCard) {
+      fsmState = "IDLE";
+      setFrame(0);
+      if (mobileText) mobileText.textContent = MOBILE_DEFAULT_TEXT;
+      return;
+    }
+
+    const homeId = homeCard.getAttribute("data-kodama-id");
+    const defaultMsg = homeCard.getAttribute("data-kodama-message") ?? "";
+    currentCardId = homeId;
+    currentMobileCardId = homeId;
+
+    if (desktopText) desktopText.textContent = "";
+    if (mobileText) mobileText.textContent = "";
+
+    if (!isMobileViewport()) positionDesktopActorAtCard(homeCard);
+    if (desktopBubble) desktopBubble.style.opacity = "1";
+
+    fsmState = "TALKING";
+    let talkToggle = 0;
+    const talkInterval = setInterval(() => {
+      if (!stillCurrent()) {
+        clearInterval(talkInterval);
+        return;
+      }
+      talkToggle = talkToggle === 0 ? 4 : 0;
+      setFrame(talkToggle);
+    }, 180);
+
+    const target = isMobileViewport() ? mobileText : desktopText;
+    const completed = target ? await typewrite(target, defaultMsg, stillCurrent, 18) : true;
+    clearInterval(talkInterval);
+    if (!completed || !stillCurrent()) return;
+
+    // Keep the hidden viewport's text in sync too.
+    const other = isMobileViewport() ? desktopText : mobileText;
+    if (other) other.textContent = defaultMsg;
+
+    fsmState = "IDLE";
+    setFrame(0);
+  }
+
+  sleepToggleBtn?.addEventListener("click", () => {
+    if (isSleeping) {
+      wakeUp();
+    } else {
+      enterSleep();
+    }
+  });
+</script>
