@@ -1,12 +1,21 @@
-├── public/
-│   ├── fonts/              # Self-hosted Monocraft & Silkscreen assets
-│   ├── sprites/            # Kodama 6-frame horizontal sprite sheet (kodama-sheet.png)
-│   └── resume.pdf          # Downloadable resume
-├── src/
-│   ├── components/         # Navbar, Hero, Projects, Skills, Interests, Network, Contact & KodamaCompanion
-│   ├── data/               # Strongly typed portfolio dataset (portfolio.ts)
-│   ├── layouts/            # Base HTML wrapper (BaseLayout.astro)
-│   ├── pages/              # Single-page assembly (index.astro)
-│   └── styles/             # Tailwind directives and global neo-brutalist rules (global.css)
-├── astro.config.mjs
-└── package.json
+# Arnav Sharma — Portfolio Website
+
+Personal portfolio website built by **Arnav Sharma** to showcase projects, engineering stack, and background in AI and backend systems. 
+
+Featuring a custom reactive pixel-art companion, Tokyo Night neo-brutalist aesthetics, and interactive developer tooling.
+
+## 🔗 Live Site
+[points-to-arnav.github.io](https://points-to-arnav.github.io)
+
+## 🛠️ Built With
+- **Astro** & **Tailwind CSS v4**
+- **Vanilla TypeScript** (Custom state machine & intersection observer logic)
+- **Silkscreen & Monocraft** pixel typography
+- **Aseprite** (Custom 6-frame horizontal sprite sheet animation)
+
+## 📬 Contact
+- **Email:** arnavsharma200626@gmail.com
+- **GitHub:** [@points-to-arnav](https://github.com/points-to-arnav)
+
+---
+*© Arnav Sharma. All rights reserved.*
